@@ -1,7 +1,13 @@
 using System;
 using System.Reflection;
+using Application.Utility.Models;
+using Jaeger;
+using Jaeger.Reporters;
+using Jaeger.Samplers;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
+using OpenTracing;
 using OpenTracing.Util;
 using Serilog;
 using Serilog.Exceptions;
@@ -30,36 +36,56 @@ namespace Application.Utility.Startup
 
             return loggerFactory;
         }
-        
-        private static void AddTracing(IServiceCollection services)
+
+        public static IServiceCollection AddTracing(this IServiceCollection services, Action<JaegerTracingOptions> setupAction = null)
+        {
+            if (setupAction != null)
+                services.ConfigureJaegerTracing(setupAction);
+
+            services.AddSingleton<ITracer>(cli =>
+            {
+                var options = cli.GetService<IOptions<JaegerTracingOptions>>().Value;
+
+                var senderConfig = new Jaeger.Configuration.SenderConfiguration(options.LoggerFactory)
+                    .WithAgentHost(options.JaegerAgentHost)
+                    .WithAgentPort(options.JaegerAgentPort);
+
+                var reporter = new RemoteReporter.Builder()
+                    .WithLoggerFactory(options.LoggerFactory)
+                    .WithSender(senderConfig.GetSender())
+                    .Build();
+
+                var sampler = new GuaranteedThroughputSampler(options.SamplingRate, options.LowerBound);
+
+                var tracer = new Tracer.Builder(options.ServiceName)
+                    .WithLoggerFactory(options.LoggerFactory)
+                    .WithReporter(reporter)
+                    .WithSampler(sampler)
+                    .Build();
+
+                if (!GlobalTracer.IsRegistered())
+                    GlobalTracer.Register(tracer);
+                return tracer;
+            });
+
+            services.AddOpenTracing(builder =>
+            {
+                builder.ConfigureAspNetCore(options =>
                 {
-                    services.AddSingleton(serviceProvider =>
-                    {
-                        var serviceName = Assembly.GetEntryAssembly()?.GetName().Name;
-        
-                        Environment.SetEnvironmentVariable("JAEGER_SERVICE_NAME", serviceName);
-        
-                        var loggerFactory = new LoggerFactory();
-                        try
-                        {
-                            // add agenthost and port
-                            var config = Jaeger.Configuration.FromEnv(loggerFactory);
-                            var tracer = config.GetTracer();
-        
-                            GlobalTracer.Register(tracer);
-                            return tracer;
-                        }
-                        catch (System.Exception)
-                        {
-                            Console.WriteLine("Couldn't register logger");
-                        }
-        
-                        return null;
-                    });
-        
-                    // Add logging
-                    services.AddLogging(loggingBuilder => loggingBuilder.AddSerilog(dispose: true));
-                    services.AddOpenTracing();
-                }
+                    options.Hosting.IgnorePatterns.Add(x => x.Request.Path == "/api/health/ping");
+                    options.Hosting.IgnorePatterns.Add(x => x.Request.Path == "/health");
+                    options.Hosting.IgnorePatterns.Add(x => x.Request.Path == "/metrics");
+                });
+            });
+
+            return services;
+
+        }
+
+        public static void ConfigureJaegerTracing(this IServiceCollection services,
+            Action<JaegerTracingOptions> setupAction)
+        {
+            services.Configure<JaegerTracingOptions>(setupAction);
+        }
     }
 }
