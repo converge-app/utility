@@ -6,6 +6,7 @@ namespace Application.Utility.Models
         {
             Message = message;
         }
+
         public string Message { get; set; }
     }
 }

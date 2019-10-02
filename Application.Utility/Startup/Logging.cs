@@ -1,5 +1,4 @@
 using System;
-using System.Reflection;
 using Application.Utility.Models;
 using Jaeger;
 using Jaeger.Reporters;
@@ -37,7 +36,8 @@ namespace Application.Utility.Startup
             return loggerFactory;
         }
 
-        public static IServiceCollection AddTracing(this IServiceCollection services, Action<JaegerTracingOptions> setupAction = null)
+        public static IServiceCollection AddTracing(this IServiceCollection services,
+            Action<JaegerTracingOptions> setupAction = null)
         {
             if (setupAction != null)
                 services.ConfigureJaegerTracing(setupAction);
@@ -46,7 +46,7 @@ namespace Application.Utility.Startup
             {
                 var options = cli.GetService<IOptions<JaegerTracingOptions>>().Value;
 
-                var senderConfig = new Jaeger.Configuration.SenderConfiguration(options.LoggerFactory)
+                var senderConfig = new Configuration.SenderConfiguration(options.LoggerFactory)
                     .WithAgentHost(options.JaegerAgentHost)
                     .WithAgentPort(options.JaegerAgentPort);
 
@@ -79,13 +79,12 @@ namespace Application.Utility.Startup
             });
 
             return services;
-
         }
 
         public static void ConfigureJaegerTracing(this IServiceCollection services,
             Action<JaegerTracingOptions> setupAction)
         {
-            services.Configure<JaegerTracingOptions>(setupAction);
+            services.Configure(setupAction);
         }
     }
 }
