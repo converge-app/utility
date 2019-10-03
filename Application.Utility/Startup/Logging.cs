@@ -21,12 +21,12 @@ namespace Application.Utility.Startup
             var elasticUri = Environment.GetEnvironmentVariable("ELASTICSEARCH_URI");
             if (!string.IsNullOrEmpty(elasticUri))
                 Log.Logger = new LoggerConfiguration()
-                    .Enrich.FromLogContext()
-                    .Enrich.WithExceptionDetails()
-                    .WriteTo.Elasticsearch(new ElasticsearchSinkOptions(new Uri(elasticUri))
-                    {
-                        AutoRegisterTemplate = true
-                    }).CreateLogger();
+                .Enrich.FromLogContext()
+                .Enrich.WithExceptionDetails()
+                .WriteTo.Elasticsearch(new ElasticsearchSinkOptions(new Uri(elasticUri))
+                {
+                    AutoRegisterTemplate = true
+                }).CreateLogger();
         }
 
         public static ILoggerFactory AddLogging(this ILoggerFactory loggerFactory)
