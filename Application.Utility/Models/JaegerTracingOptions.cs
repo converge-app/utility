@@ -6,7 +6,7 @@ namespace Application.Utility.Models
     {
         public JaegerTracingOptions(string hostName, int agentPort)
         {
-            SamplingRate = 0.1d;
+            SamplingRate = 1;
             LowerBound = 1d;
             LoggerFactory = new LoggerFactory();
             JaegerAgentHost = hostName;
@@ -15,7 +15,7 @@ namespace Application.Utility.Models
 
         public JaegerTracingOptions()
         {
-            SamplingRate = 0.1d;
+            SamplingRate = 1;
             LowerBound = 1d;
             LoggerFactory = new LoggerFactory();
             JaegerAgentHost = "localhost";
