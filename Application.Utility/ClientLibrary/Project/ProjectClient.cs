@@ -18,12 +18,12 @@ namespace Application.Utility.ClientLibrary.Project
             var clientFactory = factory.HttpClientFactory;
             var client = clientFactory.CreateClient("ProjectsService");
             var host = GetProjectsServiceHost();
-            var pingUri = $"http://{host}/api/health/ping";
+            var pingUri = $"{host}/api/health/ping";
             var response = await client.GetAsync(pingUri);
             if (!response.IsSuccessStatusCode)
                 throw new ServiceDown(host);
 
-            var uri = $"http://{host}/api/projects/{projectId}";
+            var uri = $"{host}/api/projects/{projectId}";
             response = await client.GetAsync(uri);
             if (response.IsSuccessStatusCode)
                 return await response.Content.ReadAsAsync<ProjectData>();
@@ -34,28 +34,26 @@ namespace Application.Utility.ClientLibrary.Project
             ProjectData project)
         {
             var clientFactory = factory.HttpClientFactory;
-            
+            var client = clientFactory.CreateClient("ProjectsService");
             var host = GetProjectsServiceHost();
-            var uri = $"http://{host}/api/projects/{project.Id}";
-            var content = project;
+            var pingUri = $"{host}/api/health/ping";
             
-            using (var request = new HttpRequestMessage(HttpMethod.Put, uri))
-            {
-                var client = clientFactory.CreateClient("ProjectsServicePut");
+            var response = await client.GetAsync(pingUri);
+            if (!response.IsSuccessStatusCode)
+                throw new ServiceDown(host);
+            
+            var content = project;
+            var uri = $"{host}/api/projects/{project.Id}";
+            client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", authorizationToken);
 
-                var jsonContent = JsonConvert.SerializeObject(content);
-                request.Content = new StringContent(jsonContent, Encoding.UTF8, "application/json");
-                client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", authorizationToken);
-
-                var response = await client.PutAsJsonAsync(uri, content);
-                
-                return response.IsSuccessStatusCode;
-            }
+            response = await client.PutAsJsonAsync(uri, content);
+            return response.IsSuccessStatusCode;
         }
 
         private static string GetProjectsServiceHost()
         {
-            var host = Environment.GetEnvironmentVariable("PROJECTS_SERVICE_HTTP");
+            var host = Environment.GetEnvironmentVariable("PROJECTS_SERVICE_HTTP") ??
+                       "https://" + Environment.GetEnvironmentVariable("PROJECTS_SERVICE_HTTPS");
             if (string.IsNullOrEmpty(host))
                 throw new EnvironmentNotSet("PROJECTS_SERVICE_HTTP");
             return host;
