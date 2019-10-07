@@ -1,4 +1,3 @@
-using System;
 using System.Net;
 using System.Net.Http;
 using System.Net.Http.Formatting;
@@ -8,6 +7,7 @@ using System.Threading.Tasks;
 using Application.Utility.Exception;
 using Microsoft.AspNetCore.Authentication;
 using Newtonsoft.Json;
+using static System.Environment;
 
 namespace Application.Utility.ClientLibrary.Project
 {
@@ -52,10 +52,13 @@ namespace Application.Utility.ClientLibrary.Project
 
         private static string GetProjectsServiceHost()
         {
-            var host = Environment.GetEnvironmentVariable("PROJECTS_SERVICE_HTTP") ??
-                       "https://" + Environment.GetEnvironmentVariable("PROJECTS_SERVICE_HTTPS");
-            if (string.IsNullOrEmpty(host))
-                throw new EnvironmentNotSet("PROJECTS_SERVICE_HTTP");
+            var host = "";
+            if (!string.IsNullOrEmpty(GetEnvironmentVariable("PROJECTS_SERVICE_HTTP")))
+                host = "http://" + GetEnvironmentVariable("PROJECTS_SERVICE_HTTP");
+            else if (!string.IsNullOrEmpty(GetEnvironmentVariable("PROJECTS_SERVICE_HTTPS")))
+                host = "https://" + GetEnvironmentVariable("PROJECTS_SERVICE_HTTPS");
+            else 
+                throw new EnvironmentNotSet("PROJECTS_SERVICE");
             return host;
         }
     }
