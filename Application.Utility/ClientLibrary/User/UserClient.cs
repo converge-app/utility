@@ -1,7 +1,7 @@
-using System;
 using System.Net.Http;
 using System.Threading.Tasks;
 using Application.Utility.Exception;
+using static System.Environment;
 
 namespace Application.Utility.ClientLibrary
 {
@@ -12,12 +12,12 @@ namespace Application.Utility.ClientLibrary
             var clientFactory = factory.HttpClientFactory;
             var client = clientFactory.CreateClient("UsersService");
             var host = GetUsersServiceHost();
-            var pingUri = $"http://{host}/api/health/ping";
+            var pingUri = $"{host}/api/health/ping";
             var response = await client.GetAsync(pingUri);
             if (!response.IsSuccessStatusCode)
                 throw new ServiceDown(host);
 
-            var uri = $"http://{host}/api/users/{ownerId}";
+            var uri = $"{host}/api/users/{ownerId}";
             response = await client.GetAsync(uri);
 
             if (response.IsSuccessStatusCode)
@@ -30,9 +30,13 @@ namespace Application.Utility.ClientLibrary
 
         private static string GetUsersServiceHost()
         {
-            var host = Environment.GetEnvironmentVariable("USERS_SERVICE_HTTP");
-            if (string.IsNullOrEmpty(host))
-                throw new EnvironmentNotSet("USERS_SERVICE_HTTP");
+            var host = "";
+            if (!string.IsNullOrEmpty(GetEnvironmentVariable("USERS_SERVICE_HTTP")))
+                host = "http://" + GetEnvironmentVariable("USERS_SERVICE_HTTP");
+            else if (!string.IsNullOrEmpty(GetEnvironmentVariable("USERS_SERVICE_HTTPS")))
+                host = "https://" + GetEnvironmentVariable("USERS_SERVICE_HTTPS");
+            else
+                throw new EnvironmentNotSet("USERS_SERVICE");
             return host;
         }
     }
