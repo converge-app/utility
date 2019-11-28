@@ -1,5 +1,6 @@
 using System;
 using System.Net.Http;
+using System.Net.Http.Headers;
 using System.Threading.Tasks;
 using Application.Utility.ClientLibrary.Authentication;
 
@@ -66,6 +67,20 @@ namespace ApplicationModulTests.TestUtility
                 Email = email,
                 Password = password
             };
+        }
+
+        public static async Task<AuthenticatedData> GenerateAndAuthenticate(HttpClient client, bool isLocal = false)
+        {
+            var user = AuthUtility.GenerateUser();
+            await AuthUtility.RegisterUser(client, user, isLocal);
+            var authUser = await AuthUtility.AuthenticateUser(client, AuthUtility.GenerateCredentials(user), isLocal);
+            return authUser;
+        }
+
+        public static HttpClient AddAuthorization(HttpClient client, string token)
+        {
+            client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
+            return client;
         }
     }
 }
