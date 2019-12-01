@@ -7,7 +7,7 @@ namespace ApplicationModulTests.TestUtility
 {
     public static class ProjectUtility
     {
-        public static async Task<ProjectData> CreateProject(HttpClient project, ProjectData user, bool isLocal = false)
+        public static async Task<ProjectData> CreateProject(HttpClient project, ProjectCreationData user, bool isLocal = false)
         {
             string url;
 
@@ -23,9 +23,9 @@ namespace ApplicationModulTests.TestUtility
                 throw new Exception("Was unsuccessful");
         }
 
-        public static ProjectData GenerateProject(string OwnerId)
+        public static ProjectCreationData GenerateProject(string OwnerId)
         {
-            return new ProjectData
+            return new ProjectCreationData
             {
                 OwnerId = OwnerId,
                 ProjectContent = new ProjectContentData
