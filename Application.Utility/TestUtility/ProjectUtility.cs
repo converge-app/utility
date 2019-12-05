@@ -14,7 +14,7 @@ namespace ApplicationModulTests.TestUtility
             if (isLocal)
                 url = "/api/Projects";
             else
-                url = "https://projects-service.api.converge-app.net/api/Projects";
+                url = "https://projects-service.api.converge-app.net/api/projects";
 
             var response = await project.PostAsJsonAsync(url, user);
             if (response.IsSuccessStatusCode)
@@ -23,11 +23,11 @@ namespace ApplicationModulTests.TestUtility
                 throw new Exception("Was unsuccessful");
         }
 
-        public static ProjectCreationData GenerateProject(string OwnerId)
+        public static ProjectCreationData GenerateProject(string ownerId)
         {
             return new ProjectCreationData
             {
-                OwnerId = OwnerId,
+                OwnerId = ownerId,
                 ProjectContent = new ProjectContentData
                 {
                     Title = Guid.NewGuid().ToString(),
